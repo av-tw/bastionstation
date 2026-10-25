@@ -1,0 +1,8 @@
+{
+  "name": "bastionstation",
+  "private": true,
+  "description": "Bastion Station website and live server status feed",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.mjs" }
+}

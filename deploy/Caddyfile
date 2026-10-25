@@ -1,0 +1,7 @@
+# Caddy config for the Bastion Station website. Replace the domain, then:
+#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy
+# Caddy obtains and renews the TLS certificate itself; ports 80 and 443 must be open.
+bastionstation.com, www.bastionstation.com {
+	reverse_proxy 127.0.0.1:8790
+	encode gzip
+}

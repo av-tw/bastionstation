@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bastion Station site: six directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans:wght@400;600&family=Permanent+Marker&family=Silkscreen:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:var(--background,#000);
+  --fg:var(--foreground,#fff);
+  --mute:var(--muted-foreground,#9aa0a6);
+  --line:var(--border,#2a2a2a);
+  --focus:var(--ring,#fff);
+  --r:var(--radius,8px);
+  --mono:"IBM Plex Mono",var(--font-mono,ui-monospace,monospace);
+  --sans:var(--font-sans,system-ui,sans-serif);
+  /* SS13 department colours, shared by the mocks */
+  --cmd:#d4a83a; --sec:#c43c3c; --med:#3f8ce6; --eng:#e58f2a; --sci:#9a5fd6; --sup:#b79350; --srv:#4caf50;
+  --mockw:640px; --mockh:500px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans);color:var(--fg);background:var(--bg);line-height:1.4}
+
+/* ---------- page chrome ---------- */
+.top{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 24px;padding:0 0 18px}
+.top h1{font-size:20px;font-weight:600;margin:0;flex:1 1 100%}
+.lede{margin:0;color:var(--mute);font-size:13px;max-width:72ch;flex:1 1 420px}
+.lede b{color:var(--fg);font-weight:600}
+.btn{font:inherit;font-size:12px;padding:5px 12px;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer;border-radius:var(--r)}
+.btn:hover,.btn[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.btn:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:30px 24px}
+.grid.one{grid-template-columns:1fr}
+.cell{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.cell.chosen{border-top:2px solid var(--fg);padding-top:9px}
+.cellhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.key{font-family:var(--mono);font-size:12px;font-weight:600;border:1px solid var(--fg);padding:0 6px;line-height:18px}
+.cell.chosen .key{background:var(--fg);color:var(--bg)}
+.cellhead h2{font-size:15px;margin:0;font-weight:600}
+.tradeoff{font-family:var(--mono);font-size:11px;color:var(--mute);flex:1 1 100%}
+.shot{position:relative;overflow:hidden;border-radius:var(--r);width:100%;max-width:var(--mockw);aspect-ratio:640/500;background:#111}
+.mock{width:var(--mockw);height:var(--mockh);position:absolute;top:0;left:0;transform-origin:0 0;overflow:hidden}
+.pm{list-style:none;margin:0;padding:0;font-size:12.5px;max-width:64ch}
+.pm li{padding-left:16px;position:relative}
+.pm li::before{position:absolute;left:0;font-family:var(--mono)}
+.plus::before{content:"+"}
+.minus::before{content:"−"}
+.choose{align-self:flex-start}
+
+.pick{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px;max-width:640px}
+.pick label{font-size:12px;color:var(--mute)}
+textarea{font:inherit;font-size:13px;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:var(--r);padding:8px;min-height:64px;resize:vertical;width:100%}
+.pickrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.status{font-size:12px;color:var(--mute);font-family:var(--mono)}
+.foot{margin-top:18px;font-size:11px;color:var(--mute);font-family:var(--mono)}
+
+/* pixel sprite */
+.px{image-rendering:pixelated;display:inline-block;vertical-align:bottom}
+
+/* ---------- A: homage ---------- */
+.mock-a{background:#05060f;color:#dfe4f5;font-family:"Noto Sans",sans-serif;
+  background-image:
+    radial-gradient(1px 1px at 20px 30px,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 90px 120px,#aab 50%,transparent 51%),
+    radial-gradient(1.5px 1.5px at 160px 60px,#ffd 50%,transparent 51%),
+    radial-gradient(1px 1px at 60px 170px,#fff 50%,transparent 51%),
+    radial-gradient(1px 1px at 130px 190px,#9ad 50%,transparent 51%),
+    radial-gradient(1px 1px at 40px 90px,#f99 50%,transparent 51%);
+  background-size:210px 220px,170px 190px,260px 240px,190px 150px,230px 210px,310px 330px}
+.a-nav{display:flex;justify-content:center;gap:16px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:#ffa552;padding:10px}
+.a-logo{text-align:center;margin:6px 0 12px}
+.a-word{font-family:Silkscreen,monospace;font-weight:700;font-size:28px;letter-spacing:1px;color:#d5dcff;text-shadow:3px 3px 0 #2838a8,6px 6px 0 #141c5e}
+.a-logo .px{width:30px;height:35px;margin-left:8px}
+.a-panel{position:relative;margin:24px 40px 0;border:1px solid #3b48c4;background:#141520;padding:18px 18px 12px}
+.a-tab{position:absolute;top:-15px;left:12px;margin:0;background:#3b48c4;color:#fff;font-size:15px;font-weight:600;padding:3px 16px;transform:skewX(-14deg)}
+.a-tab span{display:inline-block;transform:skewX(14deg)}
+.a-panel p{font-size:12px;line-height:1.5;margin:6px 0}
+.a-links{text-align:center;font-family:"IBM Plex Mono",monospace;color:#ffa552;font-size:11px;display:flex;justify-content:center;gap:22px}
+.a-count{text-align:right;font-size:9px;color:#9aa3c7;margin:0 0 6px}
+.a-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.a-card{background:#0b1a33;border:1px solid #2d4a8a;padding:5px 6px;font-family:"IBM Plex Mono",monospace;font-size:8.5px;color:#8fb4ff;display:flex;flex-direction:column;line-height:1.35}
+.a-card b{font-weight:400;color:#9fc1ff}
+.a-name{font-size:11px;color:#dbe6ff}
+.a-off{opacity:.55;background:#111;border-color:#333;color:#999}
+.a-banner{margin:14px auto 0;width:540px;height:56px;display:flex;align-items:center;justify-content:center;gap:14px;background:repeating-linear-gradient(135deg,#2a1414 0 14px,#1c0e0e 14px 28px);border:1px solid #5a2a2a;font-family:Silkscreen,monospace;font-size:11px;color:#ffb3a7;letter-spacing:.5px}
+.a-banner .px{width:24px;height:28px}
+.a-foot{text-align:center;font-size:9px;color:#8c93b3;margin-top:12px}
+
+/* ---------- B: console ---------- */
+.mock-b{background:#202020;color:#e6e6e6;font-family:"Noto Sans",Verdana,sans-serif;font-size:12px;display:flex;flex-direction:column}
+.b-title{background:#141414;border-bottom:1px solid #3b3b3b;padding:6px 10px;font-weight:600;font-size:12px;display:flex;align-items:center;gap:8px}
+.b-dot{width:8px;height:8px;background:#4caf50;display:inline-block}
+.b-win{margin-left:auto;color:#9a9a9a;letter-spacing:4px;font-weight:400}
+.b-body{display:flex;flex:1;min-height:0}
+.b-side{width:118px;background:#1a1a1a;display:flex;flex-direction:column;padding:6px 0}
+.b-side span{padding:7px 12px;color:#c9c9c9}
+.b-side .on{background:#3e6189;color:#fff}
+.b-main{flex:1;padding:10px 14px;overflow:hidden}
+.b-sec{margin-bottom:12px}
+.b-sec h3{font-size:13px;margin:0 0 8px;padding-bottom:3px;border-bottom:1px solid #4972a1;color:#fff}
+.b-ll{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;margin:0;font-size:11.5px}
+.b-ll dt{color:#a9a9a9}
+.b-ll dd{margin:0;color:#fff}
+.b-alert{display:inline-block;background:#1b9e4c;color:#fff;font-weight:700;font-size:10px;padding:1px 8px;letter-spacing:.08em}
+.b-btn{display:inline-block;margin-top:10px;background:#1b9e4c;color:#fff;padding:6px 12px;font-family:"IBM Plex Mono",monospace;font-size:11px}
+.b-dept{display:flex;gap:6px}
+.b-dept span{flex:1;border-left:3px solid var(--c);padding:2px 0 2px 6px;font-size:10px;line-height:1.3}
+.b-dept b{display:block;font-size:14px}
+.b-sec p{margin:0;font-size:11.5px;line-height:1.5;color:#d6d6d6}
+.b-tbl{border-collapse:collapse;font-size:11px}
+.b-tbl td{padding:2px 14px 2px 0;color:#d6d6d6;white-space:nowrap}
+.b-tbl td:first-child{color:#a9a9a9;font-family:"IBM Plex Mono",monospace}
+
+/* ---------- C: brochure ---------- */
+.mock-c{background:#f4f6fa;color:#0b1b33;font-family:Archivo,sans-serif}
+.c-nav{display:flex;align-items:center;gap:10px;padding:14px 32px;border-bottom:1px solid #d9dee7;font-size:12px}
+.c-mark{background:#0b3d91;color:#fff;font-weight:800;padding:2px 6px;font-size:11px}
+.c-co{font-weight:600;font-size:13px}
+.c-links{margin-left:auto;color:#4a5568;font-size:11px}
+.c-hero{display:grid;grid-template-columns:1fr 200px;gap:28px;padding:34px 32px 18px}
+.c-eye{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#0b3d91;margin:0}
+.c-copy h2{font-size:42px;font-weight:800;letter-spacing:-.02em;line-height:.95;margin:10px 0 12px}
+.c-sub{font-size:14px;color:#3b4a62;margin:0 0 18px}
+.c-cta{margin:0;display:flex;align-items:center;gap:14px;font-size:12px}
+.c-btn{background:#0b3d91;color:#fff;padding:8px 14px;font-weight:700}
+.c-link{color:#0b3d91;font-weight:600}
+.c-shift{background:#fff;border-top:3px solid #0b3d91;padding:12px 14px;font-size:11px}
+.c-shift h4{margin:0 0 8px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#4a5568}
+.c-shift dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0}
+.c-shift dt{color:#4a5568}
+.c-shift dd{margin:0;font-weight:600}
+.c-addr{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:#4a5568;margin:10px 0 0}
+.c-depts{display:flex;gap:10px;margin:8px 32px 0}
+.c-depts span{flex:1;border-top:4px solid var(--c);padding-top:6px;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.c-fine{margin:22px 32px 0;font-size:9px;color:#6b7280;max-width:60ch}
+
+/* ---------- D: launcher ---------- */
+.mock-d{background:#000;color:#fff;font-family:"IBM Plex Mono",monospace;padding:22px 40px;text-align:center}
+.d-top{display:flex;justify-content:space-between;font-size:10px;color:#8a8f98;letter-spacing:.08em}
+.d-name{font-family:"Bebas Neue",Impact,sans-serif;font-weight:400;font-size:118px;line-height:.9;margin:16px 0 0;letter-spacing:.04em}
+.d-sub{font-size:11px;letter-spacing:.14em;color:#c8ccd4;margin:4px 0 0}
+.d-connect{margin:26px auto 0;width:400px;color:#000;padding:12px 16px 10px;font-family:"Bebas Neue",Impact,sans-serif;font-size:40px;letter-spacing:.1em;line-height:1;border:9px solid transparent;background:linear-gradient(#ffd21f,#ffd21f) padding-box,repeating-linear-gradient(45deg,#ffd21f 0 10px,#0a0a0a 10px 20px) border-box}
+.d-connect small{display:block;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:0;color:#3a3000;margin-top:4px}
+.d-stats{display:flex;justify-content:center;gap:44px;margin-top:30px}
+.d-stats b{display:block;font-family:"Bebas Neue",Impact,sans-serif;font-weight:400;font-size:38px;line-height:1}
+.d-stats span{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#8a8f98}
+.d-nav{display:flex;justify-content:center;gap:22px;margin-top:30px;font-size:11px;color:#c8ccd4}
+
+/* ---------- E: bulletin board ---------- */
+.mock-e{background-color:#3a3f47;color:#2b2418;
+  background-image:
+    linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px),
+    linear-gradient(rgba(0,0,0,.28) 1px,transparent 1px),
+    radial-gradient(circle at 8px 8px,rgba(255,255,255,.2) 1.5px,transparent 2.2px);
+  background-size:80px 80px,80px 80px,80px 80px}
+.e-rail{background:#5a6069;color:#e8ebef;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.22em;text-align:center;padding:7px;border-bottom:2px solid #22262c}
+.e-board{position:relative;height:470px}
+.e-paper,.e-print,.e-sticky{position:absolute;box-shadow:2px 4px 8px rgba(0,0,0,.5)}
+.e-paper{background:#f1e9d2;font-family:"Special Elite",Courier,monospace;padding:14px 16px}
+.e-tape{position:absolute;top:-8px;left:50%;width:62px;height:16px;margin-left:-31px;background:rgba(255,240,180,.55);transform:rotate(-3deg)}
+.e-welcome{left:24px;top:22px;width:296px;transform:rotate(-1.5deg)}
+.e-welcome h2{font-size:21px;line-height:1.05;margin:0 0 8px;font-weight:400}
+.e-welcome p{font-size:11px;line-height:1.45;margin:0}
+.e-tear{display:flex;margin:10px -16px -14px;border-top:1px dashed #8a7f66}
+.e-tear span{flex:1;writing-mode:vertical-rl;font-family:"IBM Plex Mono",monospace;font-size:7px;padding:6px 0;border-right:1px dashed #8a7f66;height:74px;color:#3a3020}
+.e-tear span:last-child{border-right:0}
+.e-rules{left:346px;top:18px;width:250px;transform:rotate(1.2deg)}
+.e-rules h3{font-size:14px;margin:0 0 4px;font-weight:400}
+.e-rules ol{font-size:11px;padding-left:18px;margin:0;line-height:1.5}
+.e-print{left:352px;top:196px;width:232px;background:#fff;color:#111;font-family:"IBM Plex Mono",monospace;font-size:10px;padding:10px 14px;transform:rotate(-.8deg);border-left:1px dashed #bbb;border-right:1px dashed #bbb}
+.e-print h3{font-size:9px;letter-spacing:.1em;margin:0 0 6px;font-weight:600}
+.e-print pre{margin:0;line-height:1.45;font:inherit}
+.e-sticky{background:#ffe66d;color:#1e1a0a;font-family:"Permanent Marker",cursive;font-size:12px;padding:14px;line-height:1.5}
+.e-note1{left:40px;top:306px;width:176px;transform:rotate(2deg)}
+.e-note2{left:412px;top:356px;width:196px;background:#9be7a8;font-size:11px;transform:rotate(-1deg)}
+.e-wanted{left:226px;top:300px;width:150px;transform:rotate(-2.5deg);text-align:center}
+.e-wanted h3{font-size:18px;letter-spacing:.15em;margin:0;font-weight:400}
+.e-wanted .px{width:36px;height:42px;margin:4px auto;display:block}
+.e-wanted p{font-size:9.5px;line-height:1.35;margin:0}
+
+/* ---------- F: station map ---------- */
+.mock-f{background:#0a0e1a;color:#c8ccd4;font-family:"IBM Plex Mono",monospace;display:flex;flex-direction:column;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:20px 20px}
+.f-hud{display:flex;align-items:baseline;gap:18px;padding:10px 20px;font-size:10px;border-bottom:1px solid #1f2633;background:rgba(10,14,26,.85)}
+.f-hud b{font-family:Silkscreen,monospace;font-size:11px;color:#fff;font-weight:400}
+.f-green{color:#4caf50;font-weight:600;margin-left:auto}
+.f-map{display:block;width:640px;height:380px}
+.f-map .hall{fill:none;stroke:#2e3645;stroke-width:12;stroke-linejoin:round}
+.f-map .room > rect{fill:var(--c);fill-opacity:.16;stroke:var(--c);stroke-width:1.5}
+.f-map .room text{fill:#fff;font-family:Silkscreen,monospace;font-size:10px}
+.f-map .room .sub{fill:#9aa3b2;font-family:"IBM Plex Mono",monospace;font-size:8px}
+.f-list{padding:8px 20px;font-size:9px;color:#6b7280}
+
+@media (max-width:700px){
+  .grid,.grid.one{grid-template-columns:1fr}
+}
+@media print{
+  body{background:#fff;color:#000}
+  .btn,.pick{display:none}
+  .grid{grid-template-columns:1fr 1fr}
+  .cell{break-inside:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Bastion Station site, six directions</h1>
+  <p class="lede"><b>Varied:</b> layout, density, which element dominates, tone. <b>Constant:</b> the same content on one page (connect link, shift status, the SS13 pitch, rules, wiki, Discord, forums, donate), plain HTML and CSS with no framework or build step, published as a ChatGPT Site by GPT-6.1-Sol. Modeled on tgstation13.org. Server address, map, and counts are placeholders.</p>
+  <button class="btn" id="sizebtn" type="button" aria-pressed="false">Full size</button>
+</header>
+
+<main class="grid" id="grid">
+
+<!-- ================= A ================= -->
+<section class="cell" data-key="A">
+  <div class="cellhead"><span class="key">A</span><h2>Homage</h2><code class="tradeoff">familiar to every /tg/ player; zero surprise</code></div>
+  <div class="shot">
+    <div class="mock mock-a">
+      <nav class="a-nav"><span>Play ▾</span><span>Rules</span><span>Wiki</span><span>Discord</span><span>Forums</span><span>Donate</span><span>Dev ▾</span></nav>
+      <div class="a-logo"><span class="a-word">BASTION STATION</span><svg class="px" data-sprite="spaceman" aria-hidden="true"></svg></div>
+      <section class="a-panel">
+        <h3 class="a-tab"><span>What is Space Station 13?</span></h3>
+        <p>Space Station 13 is a paranoia-laden, round-based roleplaying game set on a metal death trap pretending to be a research station. Pick a job, do it badly, survive the shift.</p>
+        <p class="a-links"><span>Get BYOND</span><span>Host a server</span></p>
+      </section>
+      <section class="a-panel">
+        <h3 class="a-tab"><span>Servers</span></h3>
+        <div class="a-count">31 players online</div>
+        <div class="a-cards">
+          <div class="a-card"><b>play.bastionstation.org:4000</b><span class="a-name">Bastion [US-East]</span><span>Playing /tg/Station 13</span><span>The map is: Birdshot</span><span>31/80 01:12:40</span></div>
+          <div class="a-card"><b>events.bastionstation.org:4001</b><span class="a-name">Event Hall</span><span>Loading...</span></div>
+          <div class="a-card a-off"><b>test.bastionstation.org:4002</b><span class="a-name">Test [staff]</span><span>Offline</span></div>
+        </div>
+      </section>
+      <div class="a-banner"><svg class="px" data-sprite="spaceman" aria-hidden="true"></svg><span>SHIFT 4812 · "IT WAS THE AI" · 7 CASUALTIES, 1 CLOWN</span></div>
+      <footer class="a-foot">Bastion Station · v0.1 · Source code · Clear settings</footer>
+    </div>
+  </div>
+  <ul class="pm">
+    <li class="plus">Players already know where everything is, and the connect card sits where they expect it.</li>
+    <li class="minus">It is a reskin, so the personality is borrowed. The starfield and angled tabs are the whole identity.</li>
+  </ul>
+  <button class="btn choose" type="button" aria-pressed="false">Choose A</button>
+</section>
+
+<!-- ================= B ================= -->
+<section class="cell" data-key="B">
+  <div class="cellhead"><span class="key">B</span><h2>Station console</h2><code class="tradeoff">feels like the game's own software; dense; chrome costs space</code></div>
+  <div class="shot">
+    <div class="mock mock-b">
+      <div class="b-title"><span class="b-dot"></span>Bastion Station · Station Status Display<span class="b-win">– ▢ ✕</span></div>
+      <div class="b-body">
+        <nav class="b-side"><span class="on">Overview</span><span>Servers</span><span>Rules</span><span>Wiki</span><span>Discord</span><span>Forums</span><span>Donate</span></nav>
+        <div class="b-main">
+          <section class="b-sec">
+            <h3>Station status</h3>
+            <dl class="b-ll"><dt>Alert level</dt><dd><span class="b-alert">GREEN</span></dd><dt>Shift time</dt><dd>01:12:40</dd><dt>Crew aboard</dt><dd>31 / 80</dd><dt>Map</dt><dd>Birdshot</dd><dt>Shuttle</dt><dd>Docked at station</dd></dl>
+            <div class="b-btn">Connect · byond://play.bastionstation.org:4000</div>
+          </section>
+          <section class="b-sec">
+            <h3>Departments</h3>
+            <div class="b-dept">
+              <span style="--c:var(--cmd)"><b>4</b>Command</span>
+              <span style="--c:var(--sec)"><b>5</b>Security</span>
+              <span style="--c:var(--med)"><b>4</b>Medical</span>
+              <span style="--c:var(--eng)"><b>6</b>Engineering</span>
+              <span style="--c:var(--sci)"><b>3</b>Science</span>
+              <span style="--c:var(--sup)"><b>2</b>Supply</span>
+              <span style="--c:var(--srv)"><b>7</b>Service</span>
+            </div>
+          </section>
+          <section class="b-sec">
+            <h3>Briefing</h3>
+            <p>Space Station 13 is a paranoia-laden, round-based roleplaying game set on a metal death trap pretending to be a research station. Pick a job, do it badly, survive the shift. New here? Start with the rules tab, then the wiki.</p>
+          </section>
+          <section class="b-sec">
+            <h3>Recent shifts</h3>
+            <table class="b-tbl"><tr><td>#4812</td><td>Birdshot</td><td>01:48</td><td>Shuttle escaped · 7 dead</td></tr><tr><td>#4811</td><td>Tramstation</td><td>02:10</td><td>Nuclear operatives won</td></tr><tr><td>#4810</td><td>Delta</td><td>01:22</td><td>Quiet. Suspiciously.</td></tr></table>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ul class="pm">
+    <li class="plus">Status data (alert, shift time, crew, map) has a natural home, and every SS13 player knows this chrome.</li>
+    <li class="minus">Window chrome and a sidebar waste phone width. It is gray boxes, not pixel charm.</li>
+  </ul>
+  <button class="btn choose" type="button" aria-pressed="false">Choose B</button>
+</section>
+
+<!-- ================= C ================= -->
+<section class="cell" data-key="C">
+  <div class="cellhead"><span class="key">C</span><h2>Nanotrasen careers page</h2><code class="tradeoff">satire carries it; light theme; least "gamer"</code></div>
+  <div class="shot">
+    <div class="mock mock-c">
+      <nav class="c-nav"><span class="c-mark">NT</span><span class="c-co">Nanotrasen</span><span class="c-links">Careers · Handbook · Wiki · Community · Support</span></nav>
+      <div class="c-hero">
+        <div class="c-copy">
+          <p class="c-eye">Human Resources · Sector 13 · Posting BS-4000</p>
+          <h2>Bastion Station is hiring.</h2>
+          <p class="c-sub">Twelve-hour shifts. Competitive pay. Statistically survivable.</p>
+          <p class="c-cta"><span class="c-btn">Apply now</span><span class="c-link">Read the employee handbook →</span></p>
+        </div>
+        <aside class="c-shift">
+          <h4>Current shift</h4>
+          <dl><dt>Elapsed</dt><dd>01:12:40</dd><dt>Crew</dt><dd>31 of 80</dd><dt>Facility</dt><dd>Birdshot</dd><dt>Alert</dt><dd>Green</dd></dl>
+          <p class="c-addr">byond://play.bastionstation.org:4000</p>
+        </aside>
+      </div>
+      <div class="c-depts">
+        <span style="--c:var(--cmd)">Command</span><span style="--c:var(--sec)">Security</span><span style="--c:var(--med)">Medical</span><span style="--c:var(--eng)">Engineering</span><span style="--c:var(--sci)">Science</span><span style="--c:var(--sup)">Supply</span><span style="--c:var(--srv)">Service</span>
+      </div>
+      <p class="c-fine">Nanotrasen is an equal-opportunity employer. Not liable for loss of limb, life, or sanity. Clowns welcome.</p>
+    </div>
+  </div>
+  <ul class="pm">
+    <li class="plus">Nothing else in the SS13 scene looks like this, and the copy does the work, so the CSS stays small.</li>
+    <li class="minus">A light theme fights pixel-art screenshots, and the joke has to hold on every page.</li>
+  </ul>
+  <button class="btn choose" type="button" aria-pressed="false">Choose C</button>
+</section>
+
+<!-- ================= D ================= -->
+<section class="cell" data-key="D">
+  <div class="cellhead"><span class="key">D</span><h2>Launcher</h2><code class="tradeoff">fastest route to playing; nothing else above the fold</code></div>
+  <div class="shot">
+    <div class="mock mock-d">
+      <div class="d-top"><span>US-EAST · /TG/ CODEBASE</span><span>v0.1</span></div>
+      <h2 class="d-name">BASTION</h2>
+      <p class="d-sub">SPACE STATION 13 · BIRDSHOT · SHIFT 01:12:40</p>
+      <div class="d-connect">CONNECT<small>byond://play.bastionstation.org:4000</small></div>
+      <div class="d-stats">
+        <div><b>31</b><span>crew aboard</span></div>
+        <div><b>80</b><span>slots</span></div>
+        <div><b>GREEN</b><span>alert level</span></div>
+      </div>
+      <nav class="d-nav"><span>Rules</span><span>Wiki</span><span>Discord</span><span>Forums</span><span>Donate</span></nav>
+    </div>
+  </div>
+  <ul class="pm">
+    <li class="plus">One job, done. About sixty lines of CSS.</li>
+    <li class="minus">No room for the "what is SS13" pitch. Big numbers plus a big button is a launcher cliché.</li>
+  </ul>
+  <button class="btn choose" type="button" aria-pressed="false">Choose D</button>
+</section>
+
+<!-- ================= E ================= -->
+<section class="cell" data-key="E">
+  <div class="cellhead"><span class="key">E</span><h2>Arrivals notice board</h2><code class="tradeoff">most character; most CSS; least scannable</code></div>
+  <div class="shot">
+    <div class="mock mock-e">
+      <div class="e-rail">ARRIVALS · NOTICE BOARD · READ BEFORE BOARDING</div>
+      <div class="e-board">
+        <article class="e-paper e-welcome"><span class="e-tape"></span>
+          <h2>WELCOME ABOARD<br>BASTION STATION</h2>
+          <p>Twelve hours. One station. Thirty-one crew who all think they are the main character. Grab an ID at the HoP line and report for duty.</p>
+          <div class="e-tear"><span>play.bastionstation.org:4000</span><span>play.bastionstation.org:4000</span><span>play.bastionstation.org:4000</span><span>play.bastionstation.org:4000</span><span>play.bastionstation.org:4000</span><span>play.bastionstation.org:4000</span></div>
+        </article>
+        <article class="e-paper e-rules"><span class="e-tape"></span>
+          <h3>RULES (ABRIDGED)</h3>
+          <ol><li>No griefing.</li><li>Don't be a jerk.</li><li>Clowns: see rule 2, loosely.</li><li>Full text at the Bridge, under Space Law.</li></ol>
+        </article>
+        <article class="e-print">
+          <h3>SHIFT STATUS · PRINTED 01:12:40</h3>
+<pre>CREW     31/80
+MAP      BIRDSHOT
+ALERT    GREEN
+SHUTTLE  DOCKED</pre>
+        </article>
+        <article class="e-sticky e-note1">discord → discord.gg/bastion<br>wiki → wiki.bastionstation.org</article>
+        <article class="e-paper e-wanted"><span class="e-tape"></span>
+          <h3>WANTED</h3>
+          <svg class="px" data-sprite="spaceman" aria-hidden="true"></svg>
+          <p>Whoever set the air alarm to "plasma". Reward: a forum account.</p>
+        </article>
+        <article class="e-sticky e-note2">donate → keeps the lights (and the singulo) on</article>
+      </div>
+    </div>
+  </div>
+  <ul class="pm">
+    <li class="plus">Every notice is a place for a joke, and the tear-off tabs make the join link the gag.</li>
+    <li class="minus">Rotated paper and tape need care under 700px. Finding the link depends on the gag landing.</li>
+  </ul>
+  <button class="btn choose" type="button" aria-pressed="false">Choose E</button>
+</section>
+
+<!-- ================= F ================= -->
+<section class="cell" data-key="F">
+  <div class="cellhead"><span class="key">F</span><h2>Station map</h2><code class="tradeoff">most memorable; nav hides in the map; needs an SVG</code></div>
+  <div class="shot">
+    <div class="mock mock-f">
+      <div class="f-hud"><b>BASTION STATION</b><span>Birdshot</span><span>31 crew</span><span>01:12:40</span><span class="f-green">GREEN ALERT</span></div>
+      <svg class="f-map" viewBox="0 0 640 380" role="img" aria-label="Station floor plan used as site navigation">
+        <rect class="hall" x="200" y="100" width="240" height="180"/>
+        <path class="hall" d="M320 80 V150 M320 230 V300 M180 95 H200 M180 265 H200 M440 95 H460 M440 265 H460"/>
+        <g class="room" style="--c:var(--sec)"><rect x="250" y="20" width="140" height="60"/><text x="262" y="44">SECURITY</text><text class="sub" x="262" y="60">ban appeals</text></g>
+        <g class="room" style="--c:var(--sci)"><rect x="30" y="60" width="150" height="70"/><text x="44" y="84">LIBRARY</text><text class="sub" x="44" y="100">wiki · guides</text></g>
+        <g class="room" style="--c:var(--srv)"><rect x="460" y="60" width="150" height="70"/><text x="474" y="84">BAR</text><text class="sub" x="474" y="100">discord · off-duty</text></g>
+        <g class="room" style="--c:var(--cmd)"><rect x="250" y="150" width="140" height="80"/><text x="264" y="180">BRIDGE</text><text class="sub" x="264" y="196">rules · space law</text></g>
+        <g class="room" style="--c:#c8ccd4"><rect x="30" y="230" width="150" height="70"/><text x="44" y="254">ARRIVALS</text><text class="sub" x="44" y="270">play · join the shift</text><svg data-sprite="spaceman" x="152" y="238" width="22" height="26" aria-hidden="true"></svg></g>
+        <g class="room" style="--c:var(--sup)"><rect x="460" y="230" width="150" height="70"/><text x="474" y="254">CARGO</text><text class="sub" x="474" y="270">donate · fund crates</text></g>
+        <g class="room" style="--c:var(--eng)"><rect x="250" y="300" width="140" height="60"/><text x="262" y="324">ENGINEERING</text><text class="sub" x="262" y="340">source code</text></g>
+      </svg>
+      <nav class="f-list">Arrivals: play · Bridge: rules · Library: wiki · Bar: Discord · Cargo: donate · Engineering: source · Security: ban appeals</nav>
+    </div>
+  </div>
+  <ul class="pm">
+    <li class="plus">The spatial metaphor is the game, and the map can grow with events and map rotation.</li>
+    <li class="minus">Someone has to draw and maintain the SVG. The text list under it is mandatory for keyboard and phones.</li>
+  </ul>
+  <button class="btn choose" type="button" aria-pressed="false">Choose F</button>
+</section>
+
+</main>
+
+<section class="pick" aria-label="Pick a direction">
+  <label for="why">Why this one? (optional)</label>
+  <textarea id="why" placeholder="e.g. E, but drop the wanted poster and keep the tear-off tabs"></textarea>
+  <div class="pickrow">
+    <button class="btn" id="submit" type="button">Copy choice for chat</button>
+    <span class="status" id="status" role="status">No direction chosen yet.</span>
+  </div>
+</section>
+
+<footer class="foot">Last updated 2026-10-15 · design/bastionstation-site-brainstorm.html</footer>
+
+<script>
+// Universal submit + clipboard handler (html-skills submit-handler.js), inlined.
+(function () {
+  const SECRET_PATTERNS = [
+    ['private-key', /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]+?-----END [A-Z ]*PRIVATE KEY-----/g],
+    ['aws-key-id', /\bAKIA[0-9A-Z]{16}\b/g],
+    ['github-token', /\bgh[opsur]_[A-Za-z0-9]{20,}\b/g],
+    ['slack-token', /\bxox[abprse]-[A-Za-z0-9-]{10,}\b/g],
+    ['openai-key', /\bsk-[A-Za-z0-9_-]{20,}\b/g],
+    ['google-key', /\bAIza[0-9A-Za-z_-]{30,}\b/g],
+    ['jwt', /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g],
+    ['url-userinfo', /\b[a-z][a-z0-9+.-]*:\/\/[^\s/:@"']+:[^\s/@"']+@/gi],
+  ];
+  function redactKnownSecrets(json) {
+    let count = 0;
+    for (const pair of SECRET_PATTERNS) {
+      json = json.replace(pair[1], function (m) {
+        count++;
+        if (pair[0] === 'url-userinfo') return '{{REDACTED:url-userinfo}}';
+        return '{{REDACTED:' + pair[0] + ':…' + m.slice(-4) + '}}';
+      });
+    }
+    return { json: json, count: count };
+  }
+  function compact(json) { try { return JSON.stringify(JSON.parse(json)); } catch (e) { return json; } }
+  async function submitToClaude(payload, opts) {
+    opts = opts || {};
+    let json = JSON.stringify(payload, null, 2);
+    let note = '';
+    if (opts.redactSecrets) {
+      const red = redactKnownSecrets(json);
+      if (red.count > 0) { json = red.json; note = ' (' + red.count + ' secret-looking value' + (red.count === 1 ? '' : 's') + ' redacted)'; }
+    }
+    const url = opts.url || window.__CLAUDE_SUBMIT_URL__;
+    let serverFailure = '';
+    if (url) {
+      try {
+        const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: compact(json) });
+        if (r.ok) { notify(opts, (opts.serverMessage || window.__CLAUDE_SERVER_MESSAGE__ || 'Submitted to the agent.') + note); return 'server'; }
+        serverFailure = 'HTTP ' + r.status;
+      } catch (e) { serverFailure = 'unreachable'; }
+    }
+    return clipboardSubmit(json, opts, note, serverFailure);
+  }
+  async function clipboardSubmit(json, opts, note, serverFailure) {
+    let msg;
+    if (serverFailure) {
+      msg = opts.fallbackMessage || window.__CLAUDE_FALLBACK_MESSAGE__ || ("The agent listener didn't answer (" + serverFailure + "). Copied to clipboard instead. Paste it into the current chat.");
+    } else {
+      msg = opts.clipboardMessage || window.__CLAUDE_CLIPBOARD_MESSAGE__ || 'Copied to clipboard. Paste it into the current chat.';
+    }
+    return copyToClipboard(json, { ...opts, message: msg + (note || ''), returnTag: 'clipboard' });
+  }
+  async function copyToClipboard(text, opts) {
+    opts = opts || {};
+    const msg = opts.message || 'Copied to clipboard.';
+    if (await tryAsyncClipboard(text)) { notify(opts, msg); return opts.returnTag || 'copied'; }
+    if (copyViaExecCommand(text)) { notify(opts, msg); return opts.returnTag || 'copied'; }
+    showInlineFallback(text);
+    return 'manual';
+  }
+  async function tryAsyncClipboard(text) { try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; } }
+  function copyViaExecCommand(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    Object.assign(ta.style, { position: 'fixed', top: '0', left: '0', width: '1px', height: '1px', opacity: '0' });
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    return ok;
+  }
+  function notify(opts, msg) {
+    if (typeof opts.onResult === 'function') { opts.onResult(msg); return; }
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.setAttribute('role', 'status');
+    Object.assign(el.style, { position: 'fixed', bottom: '16px', left: '50%', transform: 'translateX(-50%)', background: '#111', color: '#fff', padding: '10px 14px', borderRadius: '8px', font: '14px system-ui', zIndex: 99999, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' });
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+  function showInlineFallback(json) {
+    const wrap = document.createElement('div');
+    wrap.setAttribute('role', 'region');
+    wrap.setAttribute('aria-label', 'Manual copy required');
+    Object.assign(wrap.style, { position: 'fixed', left: '50%', bottom: '12px', transform: 'translateX(-50%)', width: 'min(720px, calc(100% - 24px))', background: '#111', color: '#fff', borderRadius: '10px', padding: '10px 12px', boxShadow: '0 6px 24px rgba(0,0,0,0.3)', zIndex: 99999, font: '13px system-ui, -apple-system, sans-serif', display: 'grid', gridTemplateColumns: '1fr auto', columnGap: '8px', alignItems: 'start' });
+    const main = document.createElement('div');
+    const msg = document.createElement('div');
+    const isApple = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
+    msg.textContent = 'Auto-copy unavailable here. Press ' + (isApple ? '⌘A then ⌘C' : 'Ctrl+A then Ctrl+C') + ' in the box, then paste into the current chat.';
+    msg.style.marginBottom = '6px';
+    main.appendChild(msg);
+    const ta = document.createElement('textarea');
+    ta.value = json; ta.readOnly = true; ta.spellcheck = false;
+    Object.assign(ta.style, { width: '100%', minHeight: '60px', maxHeight: '160px', resize: 'vertical', padding: '6px 8px', font: '12px ui-monospace, monospace', background: '#fff', color: '#111', border: 'none', borderRadius: '6px', outline: 'none', boxSizing: 'border-box' });
+    main.appendChild(ta);
+    const close = document.createElement('button');
+    close.type = 'button'; close.textContent = '×'; close.setAttribute('aria-label', 'Dismiss');
+    Object.assign(close.style, { background: 'transparent', border: 'none', color: '#fff', fontSize: '18px', cursor: 'pointer', lineHeight: '1', padding: '2px 4px', alignSelf: 'start' });
+    close.addEventListener('click', () => wrap.remove());
+    wrap.append(main, close);
+    document.body.appendChild(wrap);
+    setTimeout(() => { ta.focus(); ta.select(); }, 0);
+  }
+  window.submitToClaude = submitToClaude;
+  window.copyToClipboard = copyToClipboard;
+})();
+
+// Page logic: pixel sprites, mock scaling, choose + submit.
+(function () {
+  const NS = 'http://www.w3.org/2000/svg';
+  const SPRITES = {
+    spaceman: {
+      w: 12, h: 14,
+      colors: { O: '#0f1117', G: '#b9c2cc', V: '#3b82f6', R: '#e5484d' },
+      rows: [
+        '....OOOO....',
+        '...OGGGGO...',
+        '..OGVVVVGO..',
+        '..OGVVVVGO..',
+        '..OGGGGGGO..',
+        '...OOOOOO...',
+        '.OOOGGGGOOO.',
+        'OGGOGRRGOGGO',
+        'OGGOGGGGOGGO',
+        '.OOOGGGGOOO.',
+        '...OGGGGO...',
+        '...OGOOGO...',
+        '...OGO.OGO..',
+        '...OOO.OOO..',
+      ],
+    },
+  };
+  document.querySelectorAll('svg[data-sprite]').forEach((svg) => {
+    const s = SPRITES[svg.dataset.sprite];
+    if (!s) return;
+    svg.setAttribute('viewBox', '0 0 ' + s.w + ' ' + s.h);
+    svg.setAttribute('shape-rendering', 'crispEdges');
+    s.rows.forEach((row, y) => {
+      Array.from(row).forEach((ch, x) => {
+        const c = s.colors[ch];
+        if (!c) return;
+        const r = document.createElementNS(NS, 'rect');
+        r.setAttribute('x', x); r.setAttribute('y', y);
+        r.setAttribute('width', 1); r.setAttribute('height', 1);
+        r.setAttribute('fill', c);
+        svg.appendChild(r);
+      });
+    });
+  });
+
+  // Scale each 640px mock to its cell; the .shot keeps the 640:500 aspect ratio in CSS.
+  const W = 640;
+  const fit = (el) => {
+    const s = Math.min(1, el.clientWidth / W);
+    el.firstElementChild.style.transform = 'scale(' + s + ')';
+  };
+  const shots = Array.from(document.querySelectorAll('.shot'));
+  const ro = new ResizeObserver((entries) => entries.forEach((e) => fit(e.target)));
+  shots.forEach((el) => { fit(el); ro.observe(el); });
+
+  const grid = document.getElementById('grid');
+  const sizebtn = document.getElementById('sizebtn');
+  sizebtn.addEventListener('click', () => {
+    const one = grid.classList.toggle('one');
+    sizebtn.setAttribute('aria-pressed', String(one));
+    sizebtn.textContent = one ? 'Side by side' : 'Full size';
+  });
+
+  const cells = Array.from(document.querySelectorAll('.cell'));
+  const status = document.getElementById('status');
+  let chosen = null;
+  cells.forEach((cell) => {
+    cell.querySelector('.choose').addEventListener('click', () => {
+      chosen = cell.dataset.key;
+      cells.forEach((c) => {
+        const on = c === cell;
+        const b = c.querySelector('.choose');
+        b.setAttribute('aria-pressed', String(on));
+        b.textContent = (on ? 'Chosen ' : 'Choose ') + c.dataset.key;
+        c.classList.toggle('chosen', on);
+      });
+      status.textContent = 'Chosen ' + chosen + ': ' + cell.querySelector('h2').textContent;
+    });
+  });
+  document.getElementById('submit').addEventListener('click', () => {
+    if (!chosen) { status.textContent = 'Pick a direction first.'; return; }
+    const cell = cells.find((c) => c.dataset.key === chosen);
+    submitToClaude({
+      skill: 'html-brainstorm-grid',
+      kind: 'pick-one',
+      data: {
+        chosen: chosen,
+        title: cell.querySelector('h2').textContent,
+        tradeoff_label: cell.querySelector('.tradeoff').textContent,
+        rationale: document.getElementById('why').value.trim(),
+        candidates: cells.map((c) => c.dataset.key),
+      },
+      version: 1,
+    }, { onResult: (m) => { status.textContent = m; } });
+  });
+})();
+</script>
+</body>
+</html>

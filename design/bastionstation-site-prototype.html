@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bastion Station - Space Station 13</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+/* Layout follows tgstation13.org (website-v2): starfield, centered column,
+   mono nav, masthead, tabbed sections, server banners. Everything inside a
+   section is drawn like TGUI, the in-game interface. */
+:root{
+  --bg:#000;
+  --fg:#fff;
+  --muted:#a6a6a6;
+  --ui:"Verdana","DejaVu Sans","Geneva",sans-serif;   /* TGUI's own stack */
+  --mono:"Inconsolata",ui-monospace,monospace;
+  --pixel:"Silkscreen",var(--mono);
+
+  /* accent: tuned by the panel below */
+  --accent:#40628a;        /* TGUI button blue */
+  --accent-hi:#4f78a8;
+  --accent-line:#4972a1;   /* TGUI section rule */
+  --link:#ffb932;          /* tg nav orange */
+
+  --win:#202020;
+  --win-title:#363636;
+  --line:#3a3a3a;
+
+  --good:#5baa27; --average:#f29a29; --bad:#db2828; --info:#4972a1;
+
+  --cmd:#d4a83a; --sec:#c43c3c; --med:#3f8ce6; --eng:#e58f2a;
+  --sci:#9a5fd6; --sup:#b79350; --srv:#4caf50; --civ:#8a8a8a;
+
+  --col:880px;
+  --pad:14px;
+  --fs:12px;
+}
+body.compact{--pad:9px;--fs:11px}
+body.accent-brass{--accent:#7a5a24;--accent-hi:#946e2e;--accent-line:#b08a3e;--link:#ffcf6b}
+body.accent-sec{--accent:#7a2a2a;--accent-hi:#953434;--accent-line:#b54646;--link:#ff9c7a}
+
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--fg);font:var(--fs)/1.5 var(--ui);min-height:100vh}
+a{color:var(--link)}
+:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+
+/* starfield: one fixed layer per depth, stars are box-shadows set from JS */
+#space{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
+#space i{position:absolute;top:0;left:0;border-radius:50%;background:transparent}
+body.stars-off #space{display:none}
+body.stars-drift #space i{animation:drift var(--t) linear infinite}
+@keyframes drift{to{transform:translateY(-2000px)}}
+@media (prefers-reduced-motion:reduce){body.stars-drift #space i{animation:none}}
+
+.wrap{max-width:var(--col);margin:0 auto;padding:0 16px}
+
+/* nav: same as tg, orange mono, spread across the column */
+.site-nav ul{display:flex;justify-content:space-around;flex-wrap:wrap;gap:4px 12px;list-style:none;margin:0;padding:18px 0 6px}
+.site-nav a{font:15px var(--mono);color:var(--link);text-decoration:none;padding:2px 4px}
+.site-nav a:hover,.site-nav a[aria-current]{text-decoration:underline}
+
+.masthead{display:flex;align-items:flex-end;justify-content:center;gap:14px;padding:22px 0 30px}
+.masthead svg{display:block;image-rendering:pixelated}
+.wordmark{font:400 44px/0.9 var(--pixel);letter-spacing:1px;margin:0;text-shadow:3px 3px 0 var(--accent)}
+.wordmark small{display:block;font-size:15px;letter-spacing:5px;color:var(--link);text-shadow:none;margin-top:8px}
+
+/* section = TGUI window. Two header styles: tg's skewed tab, or TGUI title bar. */
+.panel{position:relative;background:var(--win);border:2px solid var(--accent);margin:0 0 40px}
+.panel-h{margin:0;font:400 15px var(--ui);display:flex;align-items:center;gap:10px}
+body.hdr-tab .panel-h{position:absolute;left:18px;top:0;transform:translateY(-50%);background:var(--accent);padding:3px 16px 5px;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 100%,0 100%)}
+body.hdr-tab .panel-body{padding:calc(var(--pad) + 14px) var(--pad) var(--pad)}
+body.hdr-bar .panel{border-width:1px;border-color:var(--line)}
+body.hdr-bar .panel-h{background:var(--win-title);padding:5px 10px;font-size:13px;border-bottom:1px solid #000}
+body.hdr-bar .panel-h::after{content:"_ \2715";margin-left:auto;color:var(--muted);letter-spacing:6px;font-size:12px}
+body.hdr-bar .panel-body{padding:var(--pad)}
+.panel-meta{margin:0 0 8px;text-align:right;color:var(--muted);font:12px var(--mono)}
+
+/* TGUI primitives */
+.btn{display:inline-flex;align-items:center;gap:6px;font:var(--fs) var(--ui);color:#fff;background:var(--accent);border:0;border-radius:2px;padding:3px 8px;text-decoration:none;cursor:pointer;line-height:1.5}
+.btn:hover{background:var(--accent-hi)}
+.btn.good{background:#4a8a1f}.btn.good:hover{background:#5baa27}
+.btn.big{font-size:14px;padding:6px 14px}
+.btn[aria-disabled=true]{background:#3a3a3a;color:#8a8a8a;cursor:default}
+.btn svg{width:12px;height:12px;flex:none}
+
+.notice{position:relative;display:flex;gap:10px;align-items:center;padding:7px 10px;margin:0 0 30px;color:#fff;
+  background:#bb9b68 repeating-linear-gradient(-45deg,transparent 0 10px,rgba(0,0,0,.1) 10px 20px)}
+.notice.info{background-color:#40628a}
+.notice p{margin:0;flex:1}
+.notice a{color:#fff}
+.notice .x{background:none;border:0;color:#fff;font-size:16px;cursor:pointer;padding:0 4px}
+
+.ll{display:grid;grid-template-columns:max-content 1fr;gap:3px 12px;margin:0}
+.ll dt{color:var(--muted)}
+.ll dd{margin:0;min-width:0}
+
+.sec-t{font:700 var(--fs) var(--ui);margin:0 0 8px;padding-bottom:3px;border-bottom:2px solid var(--accent-line)}
+
+.bar{position:relative;height:18px;border:1px solid var(--line);background:#111}
+.bar > span{position:absolute;inset:0 auto 0 0;background:var(--c,var(--good));opacity:.75}
+.bar > b{position:relative;display:block;text-align:center;font-weight:400;line-height:16px}
+
+/* intro */
+.intro p{margin:0 0 10px;max-width:68ch;font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+
+/* servers: tg's state-coloured banner, TGUI internals */
+.servers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.srv{border:1px solid var(--s);background:color-mix(in srgb,var(--s) 12%,#141414);padding:10px;display:grid;gap:8px;align-content:start}
+.srv[data-state=lobby]{--s:var(--good)}
+.srv[data-state=underway]{--s:var(--info)}
+.srv[data-state=ending]{--s:var(--average)}
+.srv[data-state=offline]{--s:var(--bad)}
+.srv-top{display:flex;align-items:baseline;gap:8px}
+.srv-name{font:700 15px var(--ui)}
+.srv-state{margin-left:auto;font:700 12px var(--mono);color:color-mix(in srgb,var(--s) 70%,#fff);text-transform:uppercase}
+.srv-state::before{content:"[ "}.srv-state::after{content:" ]"}
+.addr{font-family:var(--mono);font-size:13px}
+.copy{background:none;border:1px solid var(--line);color:var(--muted);font:11px var(--ui);padding:0 5px;margin-left:6px;cursor:pointer}
+.copy:hover{color:#fff;border-color:#777}
+.srv .row{margin-top:2px}
+
+/* manifest */
+.manifest{display:grid;grid-template-columns:1fr 1fr;gap:var(--pad) 24px}
+.stack{display:flex;height:14px;border:1px solid var(--line);margin:0 0 10px}
+.stack span{background:var(--c);flex:var(--n)}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:3px 6px 3px 0;font-weight:400;white-space:nowrap}
+thead th{color:var(--muted);border-bottom:1px solid var(--line)}
+tbody tr+tr td,tbody tr+tr th{border-top:1px solid #2b2b2b}
+th.n,td.n{text-align:right;font-family:var(--mono);font-size:13px}
+.dept{display:inline-flex;align-items:center;gap:7px}
+.dept::before{content:"";width:9px;height:9px;background:var(--c);flex:none}
+.res-win{color:#8fd16a}.res-loss{color:#ff7a7a}.res-mixed{color:#f2b65a}
+
+.news{list-style:none;margin:0;padding:0}
+.news li{display:grid;grid-template-columns:86px 1fr;gap:10px;padding:5px 0}
+.news li+li{border-top:1px solid #2b2b2b}
+.news time{color:var(--muted);font:13px var(--mono)}
+.news a{color:#fff}
+
+.two{display:grid;grid-template-columns:1.25fr 1fr;gap:var(--pad) 24px}
+.scroll{overflow-x:auto}
+
+footer{text-align:center;color:var(--muted);font-size:11px;padding:0 0 40px;line-height:1.8}
+footer a{color:var(--link)}
+
+/* prototype-only tuning drawer */
+.tune{position:fixed;right:12px;bottom:12px;z-index:10;width:250px;background:#111;border:1px solid #444;font:12px var(--ui)}
+.tune summary{cursor:pointer;padding:6px 10px;background:#262626;list-style:none}
+.tune summary::-webkit-details-marker{display:none}
+.tune-body{padding:10px;display:grid;gap:9px}
+.tune fieldset{border:0;margin:0;padding:0;display:grid;gap:3px}
+.tune legend{color:var(--muted);padding:0;margin-bottom:2px}
+.tune label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.tune textarea{width:100%;min-height:44px;background:#000;color:#fff;border:1px solid #444;font:12px var(--ui);padding:4px}
+
+@media (max-width:700px){
+  .servers,.manifest,.two{grid-template-columns:1fr}
+  .wordmark{font-size:30px}
+  .wordmark small{font-size:12px;letter-spacing:3px}
+  .masthead svg{width:56px;height:auto}
+  .site-nav a{font-size:14px}
+  body.hdr-tab .panel-h{font-size:13px}
+  .site-nav ul{display:grid;grid-template-columns:repeat(4,auto);justify-content:space-between}
+  .tune{left:12px;width:auto}
+}
+@media print{
+  #space,.tune,.notice .x{display:none}
+  html,body{background:#fff;color:#000}
+  .panel,.srv{background:#fff;border-color:#000;break-inside:avoid}
+  body.hdr-tab .panel-h,body.hdr-bar .panel-h{background:#fff;color:#000;border:1px solid #000}
+  .ll dt,thead th,.news time,footer{color:#333}
+  .news a,a{color:#000}
+  .btn{background:#fff;color:#000;border:1px solid #000}
+}
+</style>
+</head>
+<body class="hdr-tab stars-static">
+<div id="space" aria-hidden="true"></div>
+
+<div class="wrap">
+  <nav class="site-nav" aria-label="Site">
+    <ul>
+      <li><a href="#" aria-current="page">Home</a></li>
+      <li><a href="#">Wiki</a></li>
+      <li><a href="#">Rules</a></li>
+      <li><a href="#">Discord</a></li>
+      <li><a href="#">Appeals</a></li>
+      <li><a href="#">Donate</a></li>
+      <li><a href="#">Source</a></li>
+      <li><a href="#news">News</a></li>
+    </ul>
+  </nav>
+
+  <header class="masthead">
+    <!-- bastion tower sprite, 16x20 grid at 4px -->
+    <svg id="tower" width="80" height="100" viewBox="0 0 16 20" shape-rendering="crispEdges" role="img" aria-label="Bastion tower sprite"></svg>
+    <h1 class="wordmark">BASTION<br>STATION<small>SPACE STATION 13</small></h1>
+  </header>
+
+  <main>
+    <div class="notice" id="notice" role="status">
+      <p>Test merge this weekend: reworked Birdshot atmospherics. Report leaks on the <a href="#">Discord</a>.</p>
+      <button class="x" type="button" aria-label="Dismiss notice">&#x2715;</button>
+    </div>
+
+    <section class="panel intro" aria-labelledby="h-about">
+      <h2 class="panel-h" id="h-about">What is Space Station 13?</h2>
+      <div class="panel-body">
+        <p>A round-based roleplaying game on a space station that is trying to kill you. You get a job, a jumpsuit and about an hour. Bastion runs /tg/station code with a slower, medium-roleplay crowd and admins who answer ahelps.</p>
+        <div class="row">
+          <a class="btn" href="https://www.byond.com/download/">
+            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M5 1h2v5h2l-3 3-3-3h2z M1 10h10v1H1z" fill="currentColor"/></svg>Get BYOND</a>
+          <a class="btn" href="#">How to join</a>
+          <a class="btn" href="#">Read the rules</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-servers">
+      <h2 class="panel-h" id="h-servers">Servers</h2>
+      <div class="panel-body">
+        <p class="panel-meta" id="pop-total">38 players online</p>
+        <div class="servers">
+          <article class="srv" data-state="underway" id="srv-main" aria-labelledby="sn-main">
+            <div class="srv-top"><span class="srv-name" id="sn-main">Bastion Station</span><span class="srv-state">Round underway</span></div>
+            <dl class="ll">
+              <dt>Address</dt><dd><span class="addr">play.bastionstation.org:4000</span><button class="copy" type="button" data-copy="play.bastionstation.org:4000">copy</button></dd>
+              <dt>Map</dt><dd class="f-map">Birdshot</dd>
+              <dt>Round</dt><dd class="f-round">#4127 &middot; 01:12:40</dd>
+              <dt>Alert</dt><dd class="f-alert">Green</dd>
+              <dt>Crew</dt><dd><div class="bar f-bar" style="--c:var(--good)"><span style="width:39%"></span><b>31 / 80</b></div></dd>
+            </dl>
+            <div class="row"><a class="btn good big f-connect" href="byond://play.bastionstation.org:4000">Connect</a></div>
+          </article>
+
+          <article class="srv" data-state="lobby" id="srv-event" aria-labelledby="sn-event">
+            <div class="srv-top"><span class="srv-name" id="sn-event">Bastion Lowpop</span><span class="srv-state">In lobby</span></div>
+            <dl class="ll">
+              <dt>Address</dt><dd><span class="addr">play.bastionstation.org:4010</span><button class="copy" type="button" data-copy="play.bastionstation.org:4010">copy</button></dd>
+              <dt>Map</dt><dd>MetaStation</dd>
+              <dt>Round</dt><dd>#981 &middot; starting in 2:30</dd>
+              <dt>Alert</dt><dd>Green</dd>
+              <dt>Crew</dt><dd><div class="bar" style="--c:var(--good)"><span style="width:23%"></span><b>7 / 30</b></div></dd>
+            </dl>
+            <div class="row"><a class="btn good big" href="byond://play.bastionstation.org:4010">Connect</a></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-manifest">
+      <h2 class="panel-h" id="h-manifest">Crew manifest</h2>
+      <div class="panel-body">
+        <p class="panel-meta">Bastion Station &middot; round #4127</p>
+        <div class="manifest">
+        <div>
+          <h3 class="sec-t">By department</h3>
+          <div class="stack" role="img" aria-label="31 crew: Command 4, Security 5, Medical 4, Engineering 6, Science 3, Supply 2, Service 7">
+            <span style="--c:var(--cmd);--n:4"></span><span style="--c:var(--sec);--n:5"></span><span style="--c:var(--med);--n:4"></span><span style="--c:var(--eng);--n:6"></span><span style="--c:var(--sci);--n:3"></span><span style="--c:var(--sup);--n:2"></span><span style="--c:var(--srv);--n:7"></span>
+          </div>
+          <table>
+            <thead><tr><th scope="col">Department</th><th scope="col" class="n">Crew</th><th scope="col" class="n">Open</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><span class="dept" style="--c:var(--cmd)">Command</span></th><td class="n">4</td><td class="n">2</td></tr>
+              <tr><th scope="row"><span class="dept" style="--c:var(--sec)">Security</span></th><td class="n">5</td><td class="n">3</td></tr>
+              <tr><th scope="row"><span class="dept" style="--c:var(--med)">Medical</span></th><td class="n">4</td><td class="n">4</td></tr>
+              <tr><th scope="row"><span class="dept" style="--c:var(--eng)">Engineering</span></th><td class="n">6</td><td class="n">1</td></tr>
+              <tr><th scope="row"><span class="dept" style="--c:var(--sci)">Science</span></th><td class="n">3</td><td class="n">5</td></tr>
+              <tr><th scope="row"><span class="dept" style="--c:var(--sup)">Supply</span></th><td class="n">2</td><td class="n">3</td></tr>
+              <tr><th scope="row"><span class="dept" style="--c:var(--srv)">Service</span></th><td class="n">7</td><td class="n">2</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3 class="sec-t">Command staff</h3>
+          <dl class="ll">
+            <dt>Captain</dt><dd>Mira Okonkwo-Vale</dd>
+            <dt>Head of Personnel</dt><dd>Desmond Ruiz</dd>
+            <dt>Head of Security</dt><dd>Vacant</dd>
+            <dt>Chief Engineer</dt><dd>Tamsin Greaves</dd>
+            <dt>Research Director</dt><dd>Vacant</dd>
+            <dt>Chief Medical Officer</dt><dd>Hollis Arden</dd>
+            <dt>Quartermaster</dt><dd>Bram Kettering</dd>
+          </dl>
+          <p style="margin:12px 0 0"><a class="btn" href="byond://play.bastionstation.org:4000">Join as Head of Security</a></p>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="two">
+      <section class="panel" aria-labelledby="h-rounds">
+        <h2 class="panel-h" id="h-rounds">Recent rounds</h2>
+        <div class="panel-body scroll">
+          <table>
+            <thead><tr><th scope="col">Round</th><th scope="col">Map</th><th scope="col">Length</th><th scope="col">Result</th></tr></thead>
+            <tbody>
+              <tr><td>#4126</td><td>Birdshot</td><td>1:38</td><td class="res-loss">Nuclear detonation</td></tr>
+              <tr><td>#4125</td><td>Birdshot</td><td>1:04</td><td class="res-win">Evacuated</td></tr>
+              <tr><td>#4124</td><td>IceBox</td><td>2:11</td><td class="res-mixed">Crew transfer</td></tr>
+              <tr><td>#4123</td><td>IceBox</td><td>0:47</td><td class="res-loss">Blob consumed station</td></tr>
+              <tr><td>#4122</td><td>Delta</td><td>1:22</td><td class="res-win">Evacuated</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="news" aria-labelledby="h-news">
+        <h2 class="panel-h" id="h-news">Station news</h2>
+        <div class="panel-body">
+          <ul class="news">
+            <li><time datetime="2026-10-12">2026-10-12</time><a href="#">Birdshot atmos rework enters test merge</a></li>
+            <li><time datetime="2026-10-01">2026-10-01</time><a href="#">October newsletter</a></li>
+            <li><time datetime="2026-09-19">2026-09-19</time><a href="#">Security rules: stun baton changes</a></li>
+            <li><time datetime="2026-09-02">2026-09-02</time><a href="#">Lowpop server now runs weekends</a></li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    Bastion Station &middot; <a href="#">Source code</a> &middot; Runs <a href="https://github.com/tgstation/tgstation">/tg/station 13</a><br>
+    Layout after <a href="https://github.com/tgstation-operations/website-v2">tgstation13.org</a>, itself based on work by mozi_h<br>
+    Prototype last updated 2026-10-15
+  </footer>
+</div>
+
+<details class="tune">
+  <summary>Prototype controls</summary>
+  <div class="tune-body">
+    <fieldset data-group="header">
+      <legend>Section header</legend>
+      <label><input type="radio" name="header" value="tab" checked> tg skewed tab</label>
+      <label><input type="radio" name="header" value="bar"> TGUI title bar</label>
+    </fieldset>
+    <fieldset data-group="accent">
+      <legend>Accent</legend>
+      <label><input type="radio" name="accent" value="tgui" checked> TGUI blue</label>
+      <label><input type="radio" name="accent" value="brass"> Bastion brass</label>
+      <label><input type="radio" name="accent" value="sec"> Security red</label>
+    </fieldset>
+    <fieldset data-group="stars">
+      <legend>Starfield</legend>
+      <label><input type="radio" name="stars" value="static" checked> Static</label>
+      <label><input type="radio" name="stars" value="drift"> Drift (like tg)</label>
+      <label><input type="radio" name="stars" value="off"> Off (plain black)</label>
+    </fieldset>
+    <fieldset data-group="density">
+      <legend>Density</legend>
+      <label><input type="radio" name="density" value="normal" checked> Normal</label>
+      <label><input type="radio" name="density" value="compact"> Compact</label>
+    </fieldset>
+    <fieldset>
+      <legend>Main server state (demo)</legend>
+      <label><input type="radio" name="state" value="lobby"> In lobby</label>
+      <label><input type="radio" name="state" value="underway" checked> Round underway</label>
+      <label><input type="radio" name="state" value="ending"> Round ending</label>
+      <label><input type="radio" name="state" value="offline"> Offline</label>
+    </fieldset>
+    <label for="note" style="color:var(--muted)">Notes</label>
+    <textarea id="note" placeholder="Anything to change before the build"></textarea>
+    <button class="btn" type="button" id="submit">Copy choices for Claude</button>
+  </div>
+</details>
+
+<script>
+// Universal submit + clipboard handler for HTML skills in this plugin.
+//
+// Two functions exposed on window:
+//
+//   submitToClaude(payload, opts) — primary export. Posts the standard
+//     payload envelope to the agent. Two delivery modes:
+//       1. Server mode    — agent injected window.__CLAUDE_SUBMIT_URL__
+//                           before handing the artifact off; submit POSTs
+//                           JSON there. Used only when the agent is certain
+//                           its localhost is reachable from the user's
+//                           browser (local Claude Code).
+//       2. Clipboard mode — default. submit copies JSON; user pastes back.
+//     If server mode was configured but the POST fails (listener died, port
+//     changed, 403), the handler falls back to clipboard AND says so in the
+//     toast, so a dead listener is visible instead of silent.
+//
+//   copyToClipboard(text, opts) — generic clipboard helper. Use this for
+//     ANY clipboard write in an artifact (e.g. a "copy CSS" or "copy URL"
+//     button). Never call navigator.clipboard.writeText directly — that
+//     skips the fallbacks and leaves the user with "can't copy" UX in
+//     contexts where the modern API rejects.
+//
+//   submitToClaude(payload, { redactSecrets: true }) — opt-in, off by
+//     default. Strips high-confidence credential patterns (PEM private
+//     keys, AKIA…, ghp_/gho_…, xox…-, sk-…, AIza…, eyJ… JWTs,
+//     scheme://user:pass@ URLs) from the serialized payload before
+//     sending/copying, replacing each with a re-joinable
+//     '{{REDACTED:<type>:…<last4>}}' marker and showing a visible notice.
+//     Intended for config/env-shaped editors (see html-throwaway-editor's
+//     "Secrets are never embedded" rule, which is the primary defense —
+//     this is a last net, not the masking step).
+//
+// Clipboard mode tries the modern Promise API first; if that rejects (file://
+// restrictions in Safari, iframe Permissions-Policy, etc.) it falls back to
+// the legacy document.execCommand('copy') path which works in many of those
+// contexts. Both paths normally hit the clipboard silently. As an absolute
+// last resort — both methods failed — a small non-blocking banner pinned to
+// the bottom shows the JSON in a pre-selected textarea with a one-line
+// "select all, copy, paste into the current chat" instruction. No modal, ever.
+//
+// Optional message overrides (window globals or opts):
+//   __CLAUDE_SERVER_MESSAGE__ / opts.serverMessage       — after a successful POST
+//   __CLAUDE_CLIPBOARD_MESSAGE__ / opts.clipboardMessage — plain clipboard mode
+//   __CLAUDE_FALLBACK_MESSAGE__ / opts.fallbackMessage   — server mode failed, copied instead
+//
+// Payload envelope (both modes carry the same JSON; pretty-printed on the
+// clipboard, compact on the wire since the receiver relays it into a
+// one-line notification):
+//   { skill: "html-<name>", kind: "<artifact-kind>", data: <...>, version: 1 }
+
+(function () {
+  // Opt-in payload redaction (opts.redactSecrets) — deliberately narrow.
+  // This handler is shared by every html-skills artifact, so only
+  // high-confidence credential patterns are stripped; fuzzy heuristics
+  // (entropy guesses, "token"-ish key names) would corrupt legitimate
+  // payloads from other skills (design tokens, hashes, dataset rows).
+  // Each match becomes a re-joinable '{{REDACTED:<type>:…<last4>}}' marker
+  // the agent can restore from the original source, and a visible notice
+  // reports the count — never silent mutation.
+  const SECRET_PATTERNS = [
+    ['private-key', /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]+?-----END [A-Z ]*PRIVATE KEY-----/g],
+    ['aws-key-id', /\bAKIA[0-9A-Z]{16}\b/g],
+    ['github-token', /\bgh[opsur]_[A-Za-z0-9]{20,}\b/g],
+    ['slack-token', /\bxox[abprse]-[A-Za-z0-9-]{10,}\b/g],
+    ['openai-key', /\bsk-[A-Za-z0-9_-]{20,}\b/g],
+    ['google-key', /\bAIza[0-9A-Za-z_-]{30,}\b/g],
+    ['jwt', /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g],
+    ['url-userinfo', /\b[a-z][a-z0-9+.-]*:\/\/[^\s/:@"']+:[^\s/@"']+@/gi],
+  ];
+
+  function redactKnownSecrets(json) {
+    let count = 0;
+    for (const pair of SECRET_PATTERNS) {
+      json = json.replace(pair[1], function (m) {
+        count++;
+        // url-userinfo matches end inside the password — there is no safe
+        // last-4 preview for passwords, so emit a fixed marker instead.
+        if (pair[0] === 'url-userinfo') return '{{REDACTED:url-userinfo}}';
+        return '{{REDACTED:' + pair[0] + ':…' + m.slice(-4) + '}}';
+      });
+    }
+    return { json: json, count: count };
+  }
+
+  function compact(json) {
+    try { return JSON.stringify(JSON.parse(json)); } catch (e) { return json; }
+  }
+
+  async function submitToClaude(payload, opts) {
+    opts = opts || {};
+    let json = JSON.stringify(payload, null, 2);
+    let note = '';
+
+    if (opts.redactSecrets) {
+      const red = redactKnownSecrets(json);
+      if (red.count > 0) {
+        json = red.json;
+        note = ' (' + red.count + ' secret-looking value'
+          + (red.count === 1 ? '' : 's') + ' redacted)';
+      }
+    }
+
+    const url = opts.url || window.__CLAUDE_SUBMIT_URL__;
+    let serverFailure = '';
+
+    if (url) {
+      try {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: compact(json),
+        });
+        if (r.ok) {
+          notify(opts, (opts.serverMessage
+            || window.__CLAUDE_SERVER_MESSAGE__
+            || 'Submitted to the agent.') + note);
+          return 'server';
+        }
+        serverFailure = 'HTTP ' + r.status;
+      } catch (e) {
+        serverFailure = 'unreachable';
+      }
+    }
+    return clipboardSubmit(json, opts, note, serverFailure);
+  }
+
+  async function clipboardSubmit(json, opts, note, serverFailure) {
+    let msg;
+    if (serverFailure) {
+      msg = opts.fallbackMessage
+        || window.__CLAUDE_FALLBACK_MESSAGE__
+        || ("The agent listener didn't answer (" + serverFailure + "). Copied to clipboard instead. Paste it into the current chat.");
+    } else {
+      msg = opts.clipboardMessage
+        || window.__CLAUDE_CLIPBOARD_MESSAGE__
+        || 'Copied to clipboard. Paste it into the current chat.';
+    }
+    return copyToClipboard(json, { ...opts, message: msg + (note || ''), returnTag: 'clipboard' });
+  }
+
+  // Standalone clipboard helper, exposed on window. Use this for ANY
+  // clipboard write in an artifact — never call navigator.clipboard.writeText
+  // directly, since that skips the execCommand fallback and the inline
+  // banner, leaving the user stuck with a "can't copy" message in the
+  // contexts where the modern API rejects.
+  async function copyToClipboard(text, opts) {
+    opts = opts || {};
+    const msg = opts.message || 'Copied to clipboard.';
+    if (await tryAsyncClipboard(text)) {
+      notify(opts, msg);
+      return opts.returnTag || 'copied';
+    }
+    if (copyViaExecCommand(text)) {
+      notify(opts, msg);
+      return opts.returnTag || 'copied';
+    }
+    showInlineFallback(text);
+    return 'manual';
+  }
+
+  async function tryAsyncClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function copyViaExecCommand(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    Object.assign(ta.style, {
+      position: 'fixed', top: '0', left: '0',
+      width: '1px', height: '1px', opacity: '0',
+    });
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    return ok;
+  }
+
+  function notify(opts, msg) {
+    if (typeof opts.onResult === 'function') { opts.onResult(msg); return; }
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.setAttribute('role', 'status');
+    Object.assign(el.style, {
+      position: 'fixed', bottom: '16px', left: '50%',
+      transform: 'translateX(-50%)', background: '#111', color: '#fff',
+      padding: '10px 14px', borderRadius: '8px', font: '14px system-ui',
+      zIndex: 99999, boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+    });
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // Absolute last resort: both clipboard paths failed. Drop a small
+  // non-blocking banner pinned to the bottom of the page with the JSON
+  // pre-selected and a one-line instruction. NEVER a modal — the rest of
+  // the page stays interactive.
+  function showInlineFallback(json) {
+    const wrap = document.createElement('div');
+    wrap.setAttribute('role', 'region');
+    wrap.setAttribute('aria-label', 'Manual copy required');
+    Object.assign(wrap.style, {
+      position: 'fixed', left: '50%', bottom: '12px',
+      transform: 'translateX(-50%)',
+      width: 'min(720px, calc(100% - 24px))',
+      background: '#111', color: '#fff',
+      borderRadius: '10px', padding: '10px 12px',
+      boxShadow: '0 6px 24px rgba(0,0,0,0.3)',
+      zIndex: 99999,
+      font: '13px system-ui, -apple-system, sans-serif',
+      display: 'grid', gridTemplateColumns: '1fr auto',
+      columnGap: '8px', alignItems: 'start',
+    });
+
+    const main = document.createElement('div');
+    const msg = document.createElement('div');
+    const isApple = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
+    msg.textContent = 'Auto-copy unavailable here. Press '
+      + (isApple ? '⌘A then ⌘C' : 'Ctrl+A then Ctrl+C')
+      + ' in the box, then paste into the current chat.';
+    msg.style.marginBottom = '6px';
+    main.appendChild(msg);
+
+    const ta = document.createElement('textarea');
+    ta.value = json;
+    ta.readOnly = true;
+    ta.spellcheck = false;
+    Object.assign(ta.style, {
+      width: '100%', minHeight: '60px', maxHeight: '160px',
+      resize: 'vertical', padding: '6px 8px',
+      font: '12px ui-monospace, monospace',
+      background: '#fff', color: '#111',
+      border: 'none', borderRadius: '6px', outline: 'none',
+      boxSizing: 'border-box',
+    });
+    main.appendChild(ta);
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = '×';
+    close.setAttribute('aria-label', 'Dismiss');
+    Object.assign(close.style, {
+      background: 'transparent', border: 'none', color: '#fff',
+      fontSize: '18px', cursor: 'pointer', lineHeight: '1',
+      padding: '2px 4px', alignSelf: 'start',
+    });
+    close.addEventListener('click', () => wrap.remove());
+
+    wrap.append(main, close);
+    document.body.appendChild(wrap);
+
+    setTimeout(() => { ta.focus(); ta.select(); }, 0);
+  }
+
+  window.submitToClaude = submitToClaude;
+  window.copyToClipboard = copyToClipboard;
+})();
+
+</script>
+<script>
+(function(){
+  // starfield: three depths, random box-shadow stars, mirrored 2000px down so drift loops
+  var layers=[[1,600,'#fff','60s'],[2,160,'#fff','110s'],[2,140,'rgba(183,231,236,.6)','90s'],[3,14,'rgba(255,200,80,.55)','160s']];
+  var space=document.getElementById('space');
+  layers.forEach(function(l){
+    var s=[];
+    for(var i=0;i<l[1];i++){
+      var x=Math.floor(Math.random()*2400),y=Math.floor(Math.random()*2000);
+      s.push(x+'px '+y+'px '+l[2], x+'px '+(y+2000)+'px '+l[2]);
+    }
+    var el=document.createElement('i');
+    el.style.width=el.style.height=l[0]+'px';
+    el.style.boxShadow=s.join(',');
+    el.style.setProperty('--t',l[3]);
+    space.appendChild(el);
+  });
+
+  // tower sprite
+  var rows=[
+    '..k..k..k..k..k.',
+    '..kk.kk.kk.kk.k.',
+    '.kssssssssssssk.',
+    '.ksSSSSSSSSSSsk.',
+    '.kkkkkkkkkkkkkk.',
+    '..ksssssssssk...',
+    '..ksSSwwSSssk...',
+    '..ksSwwwwSssk...',
+    '..ksSSwwSSssk...',
+    '..ksssssssssk...',
+    '..kssLLsssssk...',
+    '..kssLLsssssk...',
+    '..ksssssssssk...',
+    '.kkkkkkkkkkkkkk.',
+    'kssssssssssssssk',
+    'ksSSSddSSdddSSsk',
+    'ksSSSddSSdddSSsk',
+    'ksssssssssssssk.',
+    'kkkkkkkkkkkkkkkk',
+    '................'
+  ];
+  var pal={k:'#0b0e14',s:'#5f6b7a',S:'#8693a3',w:'#ffb932',L:'#79c0ff',d:'#2a3340'};
+  var svg=document.getElementById('tower'),NS='http://www.w3.org/2000/svg';
+  rows.forEach(function(r,y){for(var x=0;x<r.length;x++){var c=pal[r[x]];if(!c)continue;
+    var p=document.createElementNS(NS,'rect');p.setAttribute('x',x);p.setAttribute('y',y);p.setAttribute('width',1);p.setAttribute('height',1);p.setAttribute('fill',c);svg.appendChild(p);}});
+
+  // notice dismiss
+  document.querySelector('#notice .x').addEventListener('click',function(){document.getElementById('notice').remove();});
+
+  // copy address
+  document.querySelectorAll('.copy').forEach(function(b){b.addEventListener('click',function(){
+    copyToClipboard(b.dataset.copy,{message:'Copied '+b.dataset.copy});});});
+
+  // tuning
+  if(matchMedia('(min-width:701px)').matches)document.querySelector('.tune').open=true;
+  var body=document.body;
+  function val(n){return document.querySelector('input[name='+n+']:checked').value;}
+  function apply(){
+    body.className='';
+    body.classList.add('hdr-'+val('header'),'stars-'+val('stars'));
+    if(val('accent')!=='tgui')body.classList.add('accent-'+val('accent'));
+    if(val('density')==='compact')body.classList.add('compact');
+  }
+  var STATES={
+    lobby:{label:'In lobby',round:'#4128 · starting in 1:45',bar:'var(--good)',connect:true},
+    underway:{label:'Round underway',round:'#4127 · 01:12:40',bar:'var(--good)',connect:true},
+    ending:{label:'Round ending',round:'#4127 · shuttle docked',bar:'var(--average)',connect:true},
+    offline:{label:'Offline',round:'Server not responding',bar:'var(--bad)',connect:false}
+  };
+  function setState(){
+    var s=val('state'),d=STATES[s],card=document.getElementById('srv-main');
+    card.dataset.state=s;
+    card.querySelector('.srv-state').textContent=d.label;
+    card.querySelector('.f-round').textContent=d.round;
+    card.querySelector('.f-bar').style.setProperty('--c',d.bar);
+    var c=card.querySelector('.f-connect');
+    c.classList.toggle('good',d.connect);
+    if(d.connect){c.removeAttribute('aria-disabled');c.textContent='Connect';}
+    else{c.setAttribute('aria-disabled','true');c.textContent='Unavailable';}
+  }
+  document.querySelectorAll('.tune input').forEach(function(i){i.addEventListener('change',function(){i.name==='state'?setState():apply();});});
+  document.querySelector('.f-connect').addEventListener('click',function(e){if(this.getAttribute('aria-disabled'))e.preventDefault();});
+
+  document.getElementById('submit').addEventListener('click',function(){
+    submitToClaude({
+      skill:'html-design-prototypes',
+      kind:'tuned-component',
+      data:{
+        component:'bastionstation-site',
+        params:{header:val('header'),accent:val('accent'),stars:val('stars'),density:val('density')},
+        note:document.getElementById('note').value.trim()
+      },
+      version:1
+    });
+  });
+})();
+</script>
+</body>
+</html>

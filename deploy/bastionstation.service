@@ -1,0 +1,26 @@
+# systemd unit for the Bastion Station website. Install with:
+#   sudo cp deploy/bastionstation.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now bastionstation
+# Override settings by creating /etc/bastionstation.env with KEY=value lines (see README).
+[Unit]
+Description=Bastion Station website and server status feed
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/bastionstation
+ExecStart=/usr/bin/node /opt/bastionstation/server.mjs
+Environment=PORT=8790
+EnvironmentFile=-/etc/bastionstation.env
+Restart=always
+RestartSec=3
+# The process only reads its own directory and opens outbound sockets, so it gets a throwaway user and a read-only filesystem.
+DynamicUser=yes
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

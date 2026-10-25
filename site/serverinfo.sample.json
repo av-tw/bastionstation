@@ -1,0 +1,30 @@
+{
+  "servers": [
+    {
+      "identifier": "bastion",
+      "retry_wait": 0,
+      "data": {
+        "version": "MonkeStation 2.0",
+        "mode": "extended",
+        "round_id": "4127",
+        "players": 31,
+        "revision": "db6b08ab902314a5e14cd438e36004bf4f1361a8",
+        "revision_date": "2026-10-15T00:15:52+00:00",
+        "hub": true,
+        "admins": 2,
+        "gamestate": 3,
+        "map_name": "Birdshot",
+        "security_level": "green",
+        "round_duration": 4360,
+        "hard_popcap": 80,
+        "extreme_popcap": 100,
+        "popcap": 100,
+        "bunkered": false,
+        "shuttle_mode": "called",
+        "shuttle_timer": 180,
+        "public_address": "www.bastionstation.com:1336"
+      }
+    }
+  ],
+  "last_update": "2026-10-15T00:35:09Z"
+}

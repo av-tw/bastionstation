@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bastion Station - Space Station 13</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Silkscreen&display=swap" rel="stylesheet">
+<link rel="icon" href="icons/bastion-wall.png" type="image/png">
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div id="space" aria-hidden="true"></div>
+<div class="wrap">
+  <nav class="site-nav" aria-label="Site">
+    <ul>
+      <li><a href="#" aria-current="page">Home</a></li>
+      <li><a href="#">Wiki</a></li>
+      <li><a href="#">Rules</a></li>
+      <li><a href="#">Discord</a></li>
+      <li><a href="#">Appeals</a></li>
+      <li><a href="#">Donate</a></li>
+      <li><a href="https://github.com/Bastion-Station-13/Bastion-Station">Source</a></li>
+      <li><a href="#news">News</a></li>
+    </ul>
+  </nav>
+
+  <header class="masthead">
+    <!-- 32x32 sprites cropped from the game's .dmi files; app.js rotates them -->
+    <button class="sprite" id="sprite" type="button" aria-label="Show another sprite"><img src="icons/bastion-wall.png" width="96" height="96" alt="Bastion wall" title="Bastion wall"></button>
+    <h1 class="wordmark">BASTION<br>STATION<small>SPACE STATION 13</small></h1>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <div class="notice" id="notice">
+      <p>Welcome aboard Bastion Station. Read the <a href="#">rules</a> and join our <a href="#">Discord</a> before your first shift.</p>
+      <button class="x" type="button" aria-label="Dismiss notice">&#215;</button>
+    </div>
+    <section class="panel intro" aria-labelledby="h-about">
+      <h2 class="panel-h" id="h-about">What is Space Station 13?</h2>
+      <div class="panel-body">
+        <p>A round-based roleplaying game on a space station that is trying to kill you. You get a job, a jumpsuit and about an hour. Bastion is a fork of MonkeStation 2.0, itself built on /tg/station, with a slower, medium-roleplay crowd and admins who answer ahelps.</p>
+        <div class="row">
+          <a class="btn" href="https://www.byond.com/download/">
+            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M5 1h2v5h2l-3 3-3-3h2z M1 10h10v1H1z" fill="currentColor"/></svg>Get BYOND</a>
+          <a class="btn" href="#">How to join</a>
+          <a class="btn" href="#">Read the rules</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-server">
+      <h2 class="panel-h" id="h-server">Server</h2>
+      <div class="panel-body">
+        <p class="panel-meta" id="pop-total" role="status">Loading player count</p>
+        <p class="demo-note" id="demo-note" hidden>Demo data. This is not live server status.</p>
+        <article class="srv" data-state="loading" id="server" aria-labelledby="server-name">
+          <div class="srv-top"><h3 class="srv-name" id="server-name">Bastion Station</h3><span class="srv-state" id="state" role="status">Loading</span></div>
+          <p id="version">Waiting for server status...</p>
+          <dl class="ll">
+            <dt>Address</dt><dd><span class="addr" id="address">www.bastionstation.com:1336</span> <button class="copy" id="copy" type="button" aria-label="Copy server address">copy</button> <span id="copy-status" role="status"></span></dd>
+            <dt>Map</dt><dd id="map">Unknown</dd>
+            <dt>Round</dt><dd id="round">Unknown</dd>
+            <dt id="shuttle-label" hidden>Shuttle</dt><dd id="shuttle" hidden></dd>
+            <dt>Alert</dt><dd id="alert">Unknown</dd>
+            <dt>Population</dt><dd><div class="bar" id="population" role="progressbar" aria-label="Server population" aria-valuetext="Loading"><span id="population-fill"></span><b id="population-count">Loading</b></div></dd>
+            <dt>Admins online</dt><dd id="admins">Unknown</dd>
+            <dt>Revision</dt><dd id="revision">Unknown</dd>
+          </dl>
+          <div class="row" id="badges" hidden></div>
+          <div class="row"><a class="btn good big" id="connect" href="byond://www.bastionstation.com:1336">Connect</a></div>
+        </article>
+      </div>
+    </section>
+    <section class="panel" id="news" aria-labelledby="h-news">
+      <h2 class="panel-h" id="h-news">Station news</h2>
+      <div class="panel-body">
+        <p class="panel-meta">Example announcements, awaiting launch copy</p>
+        <ul class="news">
+          <li><time datetime="2026-10-12">2026-10-12</time><a href="#">Birdshot atmos rework enters test merge</a></li>
+          <li><time datetime="2026-10-01">2026-10-01</time><a href="#">October newsletter</a></li>
+          <li><time datetime="2026-09-19">2026-09-19</time><a href="#">Security rules: stun baton changes</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+  <footer>
+    Bastion Station &middot; <a href="https://github.com/Bastion-Station-13/Bastion-Station">Source code</a> &middot; Built on <a href="https://github.com/Monkestation/Monkestation2.0">MonkeStation 2.0</a> and <a href="https://github.com/tgstation/tgstation">/tg/station 13</a><br>
+    Sprites from the <a href="https://github.com/Bastion-Station-13/Bastion-Station">Bastion Station</a> codebase and its upstreams, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a><br>
+    Layout after <a href="https://tgstation13.org">tgstation13.org</a> (<a href="https://github.com/tgstation-operations/website-v2">website-v2, MIT</a>), based on work by mozi_h
+  </footer>
+</div>
+</body>
+</html>
