@@ -1,0 +1,8 @@
+# Apache config for PHP hosting: routes serverinfo.json to serverinfo.php so the page needs no changes.
+# Settings can be overridden here, for example:
+#   SetEnv BYOND_HOST www.bastionstation.com
+#   SetEnv BYOND_PORT 1336
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^serverinfo\.json$ serverinfo.php [L]
+</IfModule>

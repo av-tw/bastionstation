@@ -2,10 +2,12 @@
 
 Landing page for the [Bastion Station](https://github.com/Bastion-Station-13/Bastion-Station) Space Station 13 server, with a live status panel (players, map, round, alert level, shuttle) and a one-click `byond://` connect link.
 
-Two small pieces, no dependencies beyond Node:
+Two small pieces:
 
 - `site/` is a static page. `app.js` polls `serverinfo.json` every 10 seconds and renders the status panel.
-- `server.mjs` serves `site/` and builds `/serverinfo.json` by sending the BYOND `?status` topic to the game server. The result is cached for 10 seconds and shared by every visitor, so website traffic never reaches the game server directly. The JSON has the same shape as tgstation's `serverinfo.json`.
+- A status endpoint that builds `serverinfo.json` by sending the BYOND `?status` topic to the game server. The result is cached for 10 seconds and shared by every visitor, so website traffic never reaches the game server directly. It exists in two interchangeable forms, pick one: `server.mjs` (Node, also serves `site/`) or `site/serverinfo.php` (PHP, for ordinary web hosting). Both produce the same JSON, in the same shape as tgstation's `serverinfo.json`.
+
+Neither has any dependencies.
 
 ## Run it locally
 
@@ -17,54 +19,67 @@ node server.mjs
 
 Open http://127.0.0.1:8790. Add `?demo` to the URL to render `site/serverinfo.sample.json` instead of querying the game server.
 
+To try the PHP endpoint, `php -S 127.0.0.1:8790 -t site` and open http://127.0.0.1:8790/serverinfo.php. The page itself needs the `serverinfo.json` rewrite that only a real web server provides, so preview the page with Node or with `?demo`.
+
 ## Configuration
 
 Everything is an environment variable.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `PORT` | `8790` | HTTP port to listen on. |
-| `HOST` | `127.0.0.1` | Bind address. Loopback by default so only the reverse proxy can reach it. Use `0.0.0.0` in a container. |
+| `PORT` | `8790` | Node only. HTTP port to listen on. |
+| `HOST` | `127.0.0.1` | Node only. Bind address. Loopback by default so only the reverse proxy can reach it. Use `0.0.0.0` in a container. |
 | `BYOND_HOST` | `www.bastionstation.com` | Game server host to query. |
 | `BYOND_PORT` | `1336` | Game server port. |
 | `PUBLIC_ADDRESS` | `BYOND_HOST:BYOND_PORT` | Address shown on the page and used in the connect link. |
 
-If the game server moves, also update the fallback address in `site/app.js` (`CONFIG.address`) and in `site/index.html`. The page uses those when the status feed is unavailable, so the connect button keeps working even if this server is down.
+On PHP hosting, set these with `SetEnv` lines in `site/.htaccess` (there are commented examples) or edit the defaults at the top of `site/serverinfo.php`.
+
+If the game server moves, also update the fallback address in `site/app.js` (`CONFIG.address`) and in `site/index.html`. The page uses those when the status feed is unavailable, so the connect button keeps working even if the status endpoint is down.
 
 ## Deploy
 
-The server listens on loopback and speaks plain HTTP. Run it under a process supervisor and put a reverse proxy with TLS in front of it. The steps below are for a Linux host with systemd, which is what the files in `deploy/` assume. Any supervisor that can keep `node server.mjs` alive works too (Windows Task Scheduler or NSSM, pm2, a container platform).
+Pick one of the two options.
 
-### 1. Install Node
+### Option A: PHP web hosting
 
-Node 20 or newer. On Debian or Ubuntu, the [NodeSource](https://github.com/nodesource/distributions) packages give you a current version; the stock `apt install nodejs` may be too old.
+Upload the contents of `site/` to the web root of any host with PHP 7.4 or newer (cPanel, Plesk, or a plain Apache or nginx box). That is the whole deployment: there is no process to keep alive, and the host's own HTTPS covers TLS.
 
-### 2. Put the code in place
+- On Apache, the included `site/.htaccess` routes `serverinfo.json` to `serverinfo.php`, so the page needs no changes. If the host has `mod_rewrite` off, change `serverinfoUrl` in `site/app.js` to `serverinfo.php` instead.
+- On nginx with PHP-FPM, add `location = /serverinfo.json { rewrite ^ /serverinfo.php last; }` to the server block, or make the same `app.js` edit.
+- The cache lives in the system temp directory. On a host where `/tmp` is shared between accounts, set `$cacheFile` in `serverinfo.php` to a private writable directory.
+- Check it with `curl https://your-domain/serverinfo.json`.
 
-```sh
-sudo git clone https://github.com/av-tw/bastionstation /opt/bastionstation
-```
+### Option B: Node service
 
-### 3. Install the service
+The Node server listens on loopback and speaks plain HTTP. Run it under a process supervisor and put a reverse proxy with TLS in front of it. The steps below are for a Linux host with systemd, which is what the files in `deploy/` assume. Any supervisor that can keep `node server.mjs` alive works too (Windows Task Scheduler or NSSM, pm2, a container platform).
 
-```sh
-sudo cp /opt/bastionstation/deploy/bastionstation.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now bastionstation
-curl http://127.0.0.1:8790/serverinfo.json
-```
+1. **Install Node**, 20 or newer. On Debian or Ubuntu, the [NodeSource](https://github.com/nodesource/distributions) packages give you a current version; the stock `apt install nodejs` may be too old.
 
-The unit starts on boot, restarts on failure, and runs as a throwaway system user with a read-only view of the filesystem. To change settings, create `/etc/bastionstation.env` with one `KEY=value` per line and run `sudo systemctl restart bastionstation`. The unit reads that file if it exists.
+2. **Put the code in place.**
 
-If `node` is not at `/usr/bin/node` on your host (check with `which node`), edit `ExecStart` in the unit.
+   ```sh
+   sudo git clone https://github.com/av-tw/bastionstation /opt/bastionstation
+   ```
 
-### 4. Put a reverse proxy in front
+3. **Install the service.**
 
-`deploy/Caddyfile` is a complete [Caddy](https://caddyserver.com) config that serves the site on your domain with automatic HTTPS. Install Caddy, copy the file to `/etc/caddy/Caddyfile`, change the domain, and run `sudo systemctl reload caddy`. Any other proxy (nginx, Apache, Cloudflare Tunnel) works too: forward everything to `127.0.0.1:8790`.
+   ```sh
+   sudo cp /opt/bastionstation/deploy/bastionstation.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now bastionstation
+   curl http://127.0.0.1:8790/serverinfo.json
+   ```
 
-Your domain must point at the host, and ports 80 and 443 must be reachable from the internet.
+   The unit starts on boot, restarts on failure, and runs as a throwaway system user with a read-only view of the filesystem. To change settings, create `/etc/bastionstation.env` with one `KEY=value` per line and run `sudo systemctl restart bastionstation`. The unit reads that file if it exists.
 
-### Docker instead
+   If `node` is not at `/usr/bin/node` on your host (check with `which node`), edit `ExecStart` in the unit.
+
+4. **Put a reverse proxy in front.** `deploy/Caddyfile` is a complete [Caddy](https://caddyserver.com) config that serves the site on your domain with automatic HTTPS. Install Caddy, copy the file to `/etc/caddy/Caddyfile`, change the domain, and run `sudo systemctl reload caddy`. Any other proxy (nginx, Apache, Cloudflare Tunnel) works too: forward everything to `127.0.0.1:8790`.
+
+   Your domain must point at the host, and ports 80 and 443 must be reachable from the internet.
+
+**Docker** instead of systemd:
 
 ```sh
 docker build -t bastionstation .
@@ -75,18 +90,18 @@ Pass `-e BYOND_HOST=...` and so on to override settings. You still need a TLS re
 
 ## Maintain
 
-- **Update:** `cd /opt/bastionstation && sudo git pull && sudo systemctl restart bastionstation`. Files under `site/` are read from disk on every request, so content edits take effect without a restart. Only `server.mjs` changes need one.
-- **Logs:** `journalctl -u bastionstation -f`. The server logs one line at startup and one line each time a status query fails.
-- **Health:** `curl http://127.0.0.1:8790/serverinfo.json`. A healthy reply has `players` and `version` fields. A reply containing `ERROR` means the game server did not answer. Check that it is up and that `BYOND_HOST:BYOND_PORT` is reachable from this host (`nc -vz host port`). The page shows "Offline" in that case, but the connect link keeps working.
+- **Update:** on PHP hosting, re-upload the changed files; there is nothing to restart. On the Node service, `cd /opt/bastionstation && sudo git pull && sudo systemctl restart bastionstation`. Files under `site/` are read from disk on every request, so content edits take effect without a restart; only `server.mjs` changes need one.
+- **Logs:** both endpoints log one line each time a status query fails. Node: `journalctl -u bastionstation -f`. PHP: the host's PHP error log (often `error_log` in the web root or the control panel's log viewer).
+- **Health:** fetch `/serverinfo.json`. A healthy reply has `players` and `version` fields. A reply containing `ERROR` means the game server did not answer. Check that it is up and that `BYOND_HOST:BYOND_PORT` is reachable from the web host (`nc -vz host port`). Some shared hosts block outbound connections on unusual ports; ask them to allow the game port if so. The page shows "Offline" in that case, but the connect link keeps working.
 - **Content:** edit `site/index.html`. Before launch, replace the `#` placeholder links in the nav, the notice, and the intro buttons (Wiki, Rules, Discord, Appeals, Donate, How to join), and the example items in the news section.
 
 ## Layout
 
 | Path | What it is |
 | --- | --- |
-| `server.mjs` | The whole server, about 100 lines. |
-| `site/` | The static site: `index.html`, `style.css`, `app.js`, sprites in `icons/`, and `serverinfo.sample.json` for demo mode. |
-| `deploy/` | systemd unit and Caddyfile. |
+| `site/` | The static site: `index.html`, `style.css`, `app.js`, sprites in `icons/`, and `serverinfo.sample.json` for demo mode. Also `serverinfo.php` and `.htaccess`, which only matter on PHP hosting; the Node server never serves them. |
+| `server.mjs` | The Node server, about 100 lines. Not needed on PHP hosting. |
+| `deploy/` | systemd unit and Caddyfile for the Node service. |
 | `design/` | The brainstorm grid and the chosen prototype the site was built from. Not served. |
 
 ## Credits and license
